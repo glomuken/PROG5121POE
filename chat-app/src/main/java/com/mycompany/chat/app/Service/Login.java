@@ -16,7 +16,7 @@ public class Login {
     private static final String LOGIN_ERROR_MESSAGE = "Username or password incorrect please try again.";
 
     // Store registered users in memory for this console app.
-    private final List<User> users = new ArrayList<>();
+    private static List<User> users = new ArrayList<>();
 
     // check username
     public boolean checkUserName(String username) {
@@ -44,9 +44,11 @@ public class Login {
             char c = password.charAt(i);
             if (Character.isUpperCase(c)) {
                 capital = true;
+                continue;
             }
             if (Character.isDigit(c)) {
                 number = true;
+                continue;
             }
             if (!Character.isLetterOrDigit(c)) {
                 special_char = true;
@@ -61,8 +63,22 @@ public class Login {
         if (cellPhoneNumber == null) {
             return false;
         }
-        // Reference: ITU-T E.164 international format, adapted to SA numbers (+27 + 9 digits).
-        return cellPhoneNumber.matches("^\\+27\\d{9}$");
+
+        if (cellPhoneNumber.length() != 12) {
+            return false;
+        }
+
+        if (cellPhoneNumber.charAt(0) != '+' || cellPhoneNumber.charAt(1) != '2' || cellPhoneNumber.charAt(2) != '7') {
+            return false;
+        }
+
+        for (int i = 3; i < cellPhoneNumber.length(); i++) {
+            if (!Character.isDigit(cellPhoneNumber.charAt(i))) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     // register user
