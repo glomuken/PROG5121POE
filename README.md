@@ -3,6 +3,52 @@
 This repository contains POE code for:
 - **Part 1**: registration and login
 - **Part 2**: sending messages
+- **Part 3**: storing messages, array reports, and advanced message searches
+
+Registered users are now persisted to `chat-app/users.json` after successful registration and loaded again on app startup.
+Users remain as temporary (in-memory/mock) accounts by default; they are only saved persistently to `chat-app/users.json` if the user explicitly chooses to save after registration.
+
+## Part 1-3 Checklist
+
+### Part 1 (Registration and Login)
+
+- Username validation (must include `_` and be <= 5 chars)
+- Password complexity validation
+- South African format phone validation (`+27...`)
+- Login success/fail responses
+- Optional user persistence to `chat-app/users.json`
+
+### Part 2 (Messaging Core)
+
+- `Welcome to QuickChat.` displayed after successful login
+- Main menu loop runs until user chooses `3. Quit`
+- User chooses message count for the session
+- Message ID generation (10 digits)
+- Recipient validation, message length validation
+- Message hash generation using string manipulation
+- Send/disregard/store flow implemented
+- Sent message details printed in correct order
+- Stored messages written to JSON
+
+### Part 3 (Stored Messages and Reports)
+
+The app now includes the required message arrays (populated at runtime, no hard-coded array values):
+
+- Sent Messages
+- Disregarded Messages
+- Stored Messages (loaded/saved to `stored_messages.json`)
+- Message Hashes
+- Message IDs
+
+A new main menu option, `4. Stored Messages`, supports:
+
+- Display sender and recipient for all stored messages
+- Sender uses the logged-in user's username for new stored messages
+- Display the longest stored message
+- Search by message ID
+- Search all sent/stored messages for a recipient
+- Delete a stored message by hash
+- Display full stored-messages report
 
 ## Part 2 Requirements Received and Checked
 
@@ -12,8 +58,9 @@ The following requirements were captured from your brief/screenshots and checked
 2. After login, show `Welcome to QuickChat.`
 3. Show menu:
    - `1. Send Messages`
-   - `2. Show recently sent messages` (returns `Coming Soon.`)
+   - `2. Show recently sent messages` (prints sent message details)
    - `3. Quit`
+   - `4. Stored Messages`
 4. Program runs in a loop until user chooses quit.
 5. User sets how many messages they want to enter at startup.
 6. Message rules:
@@ -87,12 +134,24 @@ java com.mycompany.chat.app.ChatApp
 `MessageTest` currently checks:
 - message length pass/fail
 - recipient format pass/fail
-- exact hash for sample data (`00:0:HITONIGHT?`)
+- exact hash for sample data (`10:1:DIDCAKE?`)
 - valid/invalid message ID
 - send/disregard/store return strings
 - total sent count
 - hash checks in loop
 - printed message detail presence
+- arrays populated correctly
+- longest stored message
+- message ID lookup
+- recipient-based message search
+- delete by hash
+- report output fields
+
+`LoginTest` currently checks:
+- registration and login success/failure flows
+- username/password/cell validations
+- duplicate username rejection
+- registration success helper used by UI
 
 ## References
 

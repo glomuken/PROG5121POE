@@ -5,6 +5,10 @@
 package com.mycompany.chat.ServiceTest;
 
 
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import com.mycompany.chat.app.Service.MessageClass;
@@ -19,25 +23,41 @@ class MessageTest {
     private static final String MESSAGE_READY = "Message ready to send.";
 
     private MessageClass messageService;
-    private Message message1;
-    private Message message2;
+    private Message testMessage1;
+    private Message testMessage2;
+    private Message testMessage3;
+    private Message testMessage4;
+    private Message testMessage5;
  
     @BeforeEach
-    void setUp() {
+    void setUp() throws IOException {
+        // Keep tests deterministic by clearing persisted stored messages.
+        Files.writeString(Path.of("stored_messages.json"), "", StandardCharsets.UTF_8);
         messageService = new MessageClass();
- 
-        // Test Data Message 1
-        // Recipient: +27718693002
-        // Message: "Hi Mike, can you join us for dinner tonight?"
-        // Force known ID so hash is predictable
-        message1 = new Message("0000000000", 0, "+27718693002", "Hi Mike, can you join us for dinner tonight?", "");
-        message1.setMessageHash(messageService.createMessageHash("0000000000", 0, message1.getMessageText()));
- 
-        // Test Data Message 2
-        // Recipient: 08575975889 (no international code - invalid)
-        // Message: "Hi Keegan, did you receive the payment?"
-        message2 = new Message("0000000001", 1, "08575975889", "Hi Keegan, did you receive the payment?", "");
-        message2.setMessageHash(messageService.createMessageHash("0000000001", 1, message2.getMessageText()));
+
+        testMessage1 = buildMessage("1000000001", 1, "+27834557896", "Did you get the cake?", "Developer");
+        testMessage2 = buildMessage("1000000002", 2, "+27838884567", "Where are you? You are late! I have asked you to be on time.", "Developer");
+        testMessage3 = buildMessage("1000000003", 3, "+27834484567", "Yhoooo, I am at your gate.", "Developer");
+        testMessage4 = buildMessage("0838884567", 4, "0838884567", "It is dinner time !", "Developer");
+        testMessage5 = buildMessage("1000000005", 5, "+27838884567", "Ok, I am leaving without you.", "Developer");
+    }
+
+    private Message buildMessage(String id, int number, String recipient, String text, String sender) {
+        String hash = messageService.createMessageHash(id, number, text);
+        Message message = new Message(id, number, recipient, text, hash, sender);
+        return message;
+    }
+
+    private void populateMessagesOneToFour() {
+        messageService.sentMessage(testMessage1, 1);
+        messageService.sentMessage(testMessage2, 2);
+        messageService.sentMessage(testMessage3, 0);
+        messageService.sentMessage(testMessage4, 1);
+    }
+
+    private void populateAllMessagesOneToFive() {
+        populateMessagesOneToFour();
+        messageService.sentMessage(testMessage5, 2);
     }
  
     // =========================================================================
@@ -46,7 +66,7 @@ class MessageTest {
  
     @Test
     void testMessageLengthSuccess() {
-        assertEquals(MESSAGE_READY, messageService.checkMessageLength(message1.getMessageText()));
+        assertEquals(MESSAGE_READY, messageService.checkMessageLength(testMessage1.getMessageText()));
     }
  
     @Test
@@ -57,20 +77,17 @@ class MessageTest {
  
     @Test
     void testRecipientCellSuccess() {
-        assertEquals(RECIPIENT_SUCCESS, messageService.checkRecipientCell(message1.getRecipientCell()));
+        assertEquals(RECIPIENT_SUCCESS, messageService.checkRecipientCell(testMessage1.getRecipientCell()));
     }
  
     @Test
     void testRecipientCellFailure() {
-        assertEquals(RECIPIENT_FAILURE, messageService.checkRecipientCell(message2.getRecipientCell()));
+        assertEquals(RECIPIENT_FAILURE, messageService.checkRecipientCell("08575975889"));
     }
  
     @Test
     void testMessageHashCorrect() {
-        // ID "0000000000", number 0, message "Hi Mike, can you join us for dinner tonight?"
-        // First 2 of ID = "00", message number = 0, first word = "Hi", last word = "tonight?"
-        // Expected: 00:0:HITONIGHT?
-        assertEquals("00:0:HITONIGHT?", message1.getMessageHash());
+        assertEquals("10:1:DIDCAKE?", testMessage1.getMessageHash());
     }
  
     @Test
@@ -86,17 +103,17 @@ class MessageTest {
  
     @Test
     void testSentMessageSend() {
-        assertEquals("Message successfully sent.", messageService.sentMessage(message1, 1));
+        assertEquals("Message successfully sent.", messageService.sentMessage(testMessage1, 1));
     }
  
     @Test
     void testSentMessageDisregard() {
-        assertEquals("Press 0 to delete the message.", messageService.sentMessage(message1, 0));
+        assertEquals("Press 0 to delete the message.", messageService.sentMessage(testMessage1, 0));
     }
  
     @Test
     void testSentMessageStore() {
-        assertEquals("Message successfully stored.", messageService.sentMessage(message1, 2));
+        assertEquals("Message successfully stored.", messageService.sentMessage(testMessage1, 2));
     }
  
     // =========================================================================
@@ -115,28 +132,28 @@ class MessageTest {
  
     @Test
     void testReturnTotalMessages() {
-        messageService.sentMessage(message1, 1);
-        messageService.sentMessage(message2, 1);
+        messageService.sentMessage(testMessage1, 1);
+        messageService.sentMessage(testMessage2, 1);
         assertEquals(2, messageService.returnTotalMessages());
     }
 
     @Test
     void testPrintMessagesOrder() {
-        messageService.sentMessage(message1, 1);
+        messageService.sentMessage(testMessage1, 1);
         String output = messageService.printMessages();
 
-        assertTrue(output.contains("Message ID: " + message1.getMessageID()));
-        assertTrue(output.contains("Message Hash: " + message1.getMessageHash()));
-        assertTrue(output.contains("Recipient: " + message1.getRecipientCell()));
-        assertTrue(output.contains("Message: " + message1.getMessageText()));
+        assertTrue(output.contains("Message ID: " + testMessage1.getMessageID()));
+        assertTrue(output.contains("Message Hash: " + testMessage1.getMessageHash()));
+        assertTrue(output.contains("Recipient: " + testMessage1.getRecipientCell()));
+        assertTrue(output.contains("Message: " + testMessage1.getMessageText()));
     }
  
     @Test
     void testMessageHashesInLoop() {
         // Test all message hashes are correctly formatted (contain 2 colons)
         String[] messages = {
-            "Hi Mike, can you join us for dinner tonight?",
-            "Hi Keegan, did you receive the payment?"
+            "Did you get the cake?",
+            "Where are you? You are late! I have asked you to be on time."
         };
  
         for (int i = 0; i < messages.length; i++) {
@@ -144,5 +161,63 @@ class MessageTest {
             assertTrue(hash.contains(":"), "Hash should contain colons: " + hash);
             assertEquals(hash, hash.toUpperCase(), "Hash should be all caps");
         }
+    }
+
+    @Test
+    void testSentMessagesArrayCorrectlyPopulated() {
+        populateMessagesOneToFour();
+        Message[] sent = messageService.getSentMessagesArray();
+
+        assertEquals(2, sent.length);
+        assertEquals("Did you get the cake?", sent[0].getMessageText());
+        assertEquals("It is dinner time !", sent[1].getMessageText());
+    }
+
+    @Test
+    void testDisplayLongestMessage() {
+        populateMessagesOneToFour();
+        assertEquals("Where are you? You are late! I have asked you to be on time.", messageService.getLongestStoredMessage());
+    }
+
+    @Test
+    void testSearchForMessageID() {
+        populateMessagesOneToFour();
+        String result = messageService.searchMessageByID("0838884567");
+
+        assertEquals("It is dinner time !", result);
+    }
+
+    @Test
+    void testSearchMessagesForRecipientSentOrStored() {
+        populateAllMessagesOneToFive();
+        String result = messageService.searchMessagesForRecipient("+27838884567");
+
+        String expected = "Where are you? You are late! I have asked you to be on time." + System.lineSeparator()
+                + "Ok, I am leaving without you.";
+        assertEquals(expected, result);
+    }
+
+    @Test
+    void testDeleteMessageUsingHash() {
+        populateAllMessagesOneToFive();
+        String response = messageService.deleteMessageByHash(testMessage2.getMessageHash());
+
+        assertEquals("Message: \"Where are you? You are late! I have asked you to be on time.\" successfully deleted.", response);
+    }
+
+    @Test
+    void testDisplayReport() {
+        populateAllMessagesOneToFive();
+        String report = messageService.displayStoredMessagesReport();
+
+        assertTrue(report.contains("Message Hash"));
+        assertTrue(report.contains("Recipient"));
+        assertTrue(report.contains("Message"));
+    }
+
+    @Test
+    void testCreateMessageWithSenderUsesLoggedInUser() {
+        Message message = messageService.createMessageWithSender("+27838884567", "Hi there", "test_1");
+        assertEquals("test_1", message.getSender());
     }
 }
