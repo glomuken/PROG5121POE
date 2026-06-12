@@ -17,6 +17,7 @@ class LoginTest {
     private static final String CELL_ERROR_MESSAGE = "Cell number is incorrectly formatted or does not contain an international code; please correct the number and try again.";
     private static final String LOGIN_SUCCESS_MESSAGE = "Welcome John,Doe it is great to see you again.";
     private static final String LOGIN_ERROR_MESSAGE = "Username or password incorrect please try again.";
+    private static final String USERNAME_EXISTS_MESSAGE = "Username already exists. Please choose a different username.";
 
     private Login login;
 
@@ -79,6 +80,18 @@ class LoginTest {
         assertEquals(LOGIN_ERROR_MESSAGE, login.returnLoginStatus("kyl_1", "wrongpassword"));
     }
 
+    @Test
+    void testDuplicateUsernameRejected() {
+        String result = login.registerUser("Jane", "Doe", "kyl_1", "Strong@123", "+27839999999");
+        assertEquals(USERNAME_EXISTS_MESSAGE, result);
+    }
+
+    @Test
+    void testIsRegistrationSuccessfulHelper() {
+        String result = login.registerUser("Jane", "Doe", "jan_1", "Strong@123", "+27839999999");
+        assertTrue(login.isRegistrationSuccessful(result));
+    }
+
     // =========================================================================
     // assertTrue / assertFalse TESTS
     // =========================================================================
@@ -123,3 +136,4 @@ class LoginTest {
         assertFalse(login.checkCellPhoneNumber("08966553"));
     }
 }
+

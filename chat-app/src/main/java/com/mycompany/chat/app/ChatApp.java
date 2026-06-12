@@ -12,6 +12,7 @@ public class ChatApp {
         String choice = "";
         boolean loggedIn = false;
         MessageClass messageService = new MessageClass();
+        String loggedInUser = "";
         
 
         System.out.println("=== Welcome to ChatApp ===");
@@ -43,7 +44,19 @@ public class ChatApp {
                 System.out.print("Enter cell phone number (e.g. +27838968976): ");
                 String cellPhone = scanner.nextLine();
  
-                System.out.println("\n" + login.registerUser(firstName, lastName, username, password, cellPhone));
+                String registrationResult = login.registerUser(firstName, lastName, username, password, cellPhone);
+                System.out.println("\n" + registrationResult);
+
+                if (login.isRegistrationSuccessful(registrationResult)) {
+                    System.out.print("\nDo you want to save your account? (yes/no): ");
+                    String saveChoice = scanner.nextLine().toLowerCase().trim();
+                    if (saveChoice.equals("yes") || saveChoice.equals("y")) {
+                        login.saveCurrentUser();
+                        System.out.println("Account saved successfully.");
+                    } else {
+                        System.out.println("Account will remain as a temporary (mock) user for this session.");
+                    }
+                }
  
             } else if (choice.equals("2")) {
  
@@ -56,9 +69,11 @@ public class ChatApp {
                 String password = scanner.nextLine();
  
                 System.out.println("\n" + login.returnLoginStatus(username, password));
- 
+  
                 if (login.loginUser(username, password)) {
                     loggedIn = true;
+                    loggedInUser = username;
+                    messageService.setCurrentUser(loggedInUser);
                 }
  
             } else if (choice.equals("3")) {
@@ -82,6 +97,7 @@ public class ChatApp {
         while (!chatChoice.equals("3")) {
             System.out.println("\n1. Send Messages");
             System.out.println("2. Show recently sent messages");
+            System.out.println("4. Stored Messages");
             System.out.println("3. Quit");
             System.out.print("Choose an option: ");
             chatChoice = scanner.nextLine();
@@ -121,7 +137,7 @@ public class ChatApp {
                     }
  
                     // Build the message
-                    Message message = messageService.createMessage(recipient, messageText);
+                    Message message = messageService.createMessageWithSender(recipient, messageText, loggedInUser);
                     System.out.println("Message Hash: " + message.getMessageHash());
  
                     // Ask what to do with the message
@@ -147,7 +163,44 @@ public class ChatApp {
                 System.out.println("\nTotal messages sent: " + messageService.returnTotalMessages());
  
             } else if (chatChoice.equals("2")) {
-                System.out.println("\nComing Soon.");
+                System.out.println("\n" + messageService.printMessages());
+
+            } else if (chatChoice.equals("4")) {
+                String storedChoice = "";
+                while (!storedChoice.equalsIgnoreCase("x")) {
+                    System.out.println("\n--- Stored Messages ---");
+                    System.out.println("a. Display sender and recipient of all stored messages");
+                    System.out.println("b. Display the longest stored message");
+                    System.out.println("c. Search for a message ID");
+                    System.out.println("d. Search all messages for a recipient");
+                    System.out.println("e. Delete a message using message hash");
+                    System.out.println("f. Display stored message report");
+                    System.out.println("x. Back to main menu");
+                    System.out.print("Choose an option: ");
+                    storedChoice = scanner.nextLine();
+
+                    if (storedChoice.equalsIgnoreCase("a")) {
+                        System.out.println(messageService.displayStoredSendersAndRecipients());
+                    } else if (storedChoice.equalsIgnoreCase("b")) {
+                        System.out.println(messageService.getLongestStoredMessage());
+                    } else if (storedChoice.equalsIgnoreCase("c")) {
+                        System.out.print("Enter Message ID: ");
+                        String messageID = scanner.nextLine();
+                        System.out.println(messageService.searchMessageDetailsByID(messageID));
+                    } else if (storedChoice.equalsIgnoreCase("d")) {
+                        System.out.print("Enter recipient number: ");
+                        String recipient = scanner.nextLine();
+                        System.out.println(messageService.searchMessagesForRecipient(recipient));
+                    } else if (storedChoice.equalsIgnoreCase("e")) {
+                        System.out.print("Enter message hash: ");
+                        String messageHash = scanner.nextLine();
+                        System.out.println(messageService.deleteMessageByHash(messageHash));
+                    } else if (storedChoice.equalsIgnoreCase("f")) {
+                        System.out.println(messageService.displayStoredMessagesReport());
+                    } else if (!storedChoice.equalsIgnoreCase("x")) {
+                        System.out.println("Invalid option. Please choose a-f or x.");
+                    }
+                }
  
             } else if (chatChoice.equals("3")) {
                 System.out.println("\nTotal messages sent: " + messageService.returnTotalMessages());

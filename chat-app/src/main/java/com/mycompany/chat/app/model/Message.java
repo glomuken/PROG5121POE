@@ -15,15 +15,21 @@ public class Message {
     private String messageText;
     private String messageHash;
     private String status;
+    private String sender;
  
     // Constructor
     public Message(String messageID, int messageNumber, String recipientCell, String messageText, String messageHash) {
+        this(messageID, messageNumber, recipientCell, messageText, messageHash, "Unknown");
+    }
+
+    public Message(String messageID, int messageNumber, String recipientCell, String messageText, String messageHash, String sender) {
         this.messageID = messageID;
         this.messageNumber = messageNumber;
         this.recipientCell = recipientCell;
         this.messageText = messageText;
         this.messageHash = messageHash;
         this.status = "";
+        this.sender = sender;
     }
  
     // Getters
@@ -33,6 +39,7 @@ public class Message {
     public String getMessageText() { return messageText; }
     public String getMessageHash() { return messageHash; }
     public String getStatus() { return status; }
+    public String getSender() { return sender; }
  
     // Setters
     public void setMessageID(String messageID) { this.messageID = messageID; }
@@ -41,5 +48,6 @@ public class Message {
     public void setMessageText(String messageText) { this.messageText = messageText; }
     public void setMessageHash(String messageHash) { this.messageHash = messageHash; }
     public void setStatus(String status) { this.status = status; }
+    public void setSender(String sender) { this.sender = sender; }
 }
  
